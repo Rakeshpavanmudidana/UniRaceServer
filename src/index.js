@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // API endpoint to manually trigger the reminder job
-app.get("/run-job", async (req, res) => {
+app.get("/", async (req, res) => {
   await checkCompetitions();
   res.send("Reminder job executed manually!");
 });
