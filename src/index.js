@@ -1,3 +1,4 @@
+import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import cron from "node-cron";
 import express from "express";
