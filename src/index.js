@@ -12,12 +12,12 @@ const PORT = process.env.PORT || 3000;
 app.get("/", async (req, res) => {
   // await checkCompetitions();
   // await quizNotification();
-  // await winnerDecider();
+  await winnerDecider();
   res.send("Reminder job executed manually!");
 });
 
 // Schedule job: run daily at 8:00 AM
-cron.schedule("58 12 * * *", () => {
+cron.schedule("50 13 * * *", () => {
   console.log("⏰ Running scheduled competition reminder job...");
   checkCompetitions();
   quizNotification();

@@ -1,5 +1,5 @@
 import { db, ref } from "./firebaseService.js";
-import { child, get } from "firebase/database";
+import { child, get, set } from "firebase/database";
 import { sendEmail } from "./emailService.js";
 
 // Helper Functions
@@ -45,6 +45,7 @@ export async function checkCompetitions() {
         for (const [userId, user] of Object.entries(compData.visitedUsers || {})) {
 
           if (!user.Registered && user.NotifyMe) {
+            console.log(user.email);
             subject = `Reminder: Registration for "${compData.title}"  closes in ${diff} day${diff > 1 ? 's' : ''}`;
             message = "Dear Participant,\n\n" +
 
@@ -55,8 +56,9 @@ export async function checkCompetitions() {
                     "Warm regards,\n" +
                     "Team UniRace" +
                     "*(This is an automated message, please do not reply.)*";
+                    sendEmail(subject, message, user.email);
           }
-          sendEmail(subject, message, user.email);
+          
         }
         
       }
@@ -117,7 +119,7 @@ export async function quizNotification() {
                 for (const [userId, user] of Object.entries(compData.registeredUsers || {})) {
 
                     // Get today's date in YYYY-MM-DD format
-                    today = today.toISOString().split('T')[0];
+                    const todayDateString  = today.toISOString().split('T')[0];
 
                     // Extract just the attempt dates (keys)
                     const attemptDates = Object.keys(user.attempts || {});
@@ -127,7 +129,7 @@ export async function quizNotification() {
                     console.log("Today:", today);
 
                     // Check if today's date is present
-                    if (attemptDates.includes(today)) {
+                    if (attemptDates.includes(todayDateString )) {
                         console.log("✅ User attempted the quiz today!");
                     } else {
                         console.log("❌ User has NOT attempted the quiz today!");
@@ -158,118 +160,131 @@ export async function quizNotification() {
   }
 
 }
+
+
+
+
 export async function winnerDecider() {
+  console.log("🏆 Deciding winners for ended quizzes...");
 
-    console.log("🏆 Deciding winners for ended quizzes...")
-    try {
-        const snapshot = get(child(ref(db), "Competition/")).then((snapshot) => {
-            if (!snapshot.exists()) {
-                console.log("❌ No competition data found.");
-                return;
-            }
-            const data = snapshot.val();
+  try {
+    const snapshot = await get(child(ref(db), "Competition/"));
 
-            for (const [compId, compData] of Object.entries(data)) {
-                console.log("📌 Competition ID:", compId);
-                
-                if (compData.type != "Quiz") continue;
-                
-                // Convert users to an array
-                const usersArray = Object.entries(compData.registeredUsers || {});
-
-                // Custom sort with tie-breaking
-                const sortedUsers = usersArray.sort((a, b) => {
-                    const userA = a[1];
-                    const userB = b[1];
-
-                    // 1. Compare TotalScore
-                    if (userB.TotalScore !== userA.TotalScore) {
-                        return userB.TotalScore - userA.TotalScore; // Descending
-                    }
-
-                    // 2. Tie-breaker: Compare daily scores (up to 4 days)
-                    let userADates; 
-                    get(child(ref(db), `Users/${a[0]}/scores/${compId}`))
-                    .then((userScoreSnap) => {
-                        if (userScoreSnap.exists()) {
-                        console.log("User Score Snap:", userScoreSnap.val());
-                        userADates = Object.keys(userScoreSnap).filter(key => key !== "TotalScore");
-                        } else {
-                        console.log("No data available for this user.");
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Error fetching user scores:", error);
-                    });
-
-                    let userBDates;
-                    get(child(ref(db), `Users/${b[0]}/scores/${compId}`))
-                    .then((userScoreSnap) => {
-                        if (userScoreSnap.exists()) {
-                        console.log("User Score Snap:", userScoreSnap.val());
-                        userBDates = Object.keys(userScoreSnap).filter(key => key !== "TotalScore");
-                        } else {
-                        console.log("No data available for this user.");
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Error fetching user scores:", error);
-                    });
-
-                    for (let i = 0; i < 4; i++) {
-                        const date = i;
-                        const scoreA = get(child(ref(db), `Users/${a[0]}/scores/${compId}/${userADates[date]}/score`)) || 0;
-                        const scoreB = get(child(ref(db), `Users/${b[0]}/scores/${compId}/${userBDates[date]}/score`)) || 0;
-
-                        if (scoreA !== scoreB) {
-                            return (scoreB || 0) - (scoreA || 0); // Descending, treat undefined as 0
-                        }
-
-                    }
-
-                    // 3. If still tie after 4 days, treat as exact tie
-                    return 0;
-                });
-
-                // Assign ranks
-                let currentRank = 1;
-                let previousUser = null;
-
-                const rankedUsers = sortedUsers.map(([userId, user], index) => {
-                    let rank;
-
-                    if (
-                        previousUser &&
-                        previousUser.TotalScore === user.TotalScore &&
-                        JSON.stringify(previousUser.dailyScores) === JSON.stringify(user.dailyScores)
-                    ) {
-                        // Same exact scores across all 4 days → same rank
-                        rank = previousUser.rank;
-                    } else {
-                        rank = index + 1;
-                    }
-
-                    previousUser = { ...user, rank };
-
-                    return {
-                        userId,
-                        TotalScore: user.TotalScore,
-                        rank
-                    };
-                });
-
-                console.log("🏆 Final Ranking:", rankedUsers);
-
-
-
-
-
-                }});
-            }
-    catch (error) {
-        console.error("🔥 Error fetching competitions:", error);
+    if (!snapshot.exists()) {
+      console.log("❌ No competition data found.");
+      return;
     }
 
+    const data = snapshot.val();
 
+    for (const [compId, compData] of Object.entries(data)) {
+      console.log("📌 Competition ID:", compId);
+
+      // Only process quizzes
+      if (compData.type !== "Quiz") continue;
+
+      const registeredUsers = compData.registeredUsers || {};
+      console.log("Registered Users:", registeredUsers);
+
+      // Step 1: Fetch all user scores first
+      const usersWithScores = [];
+
+      for (const [userId] of Object.entries(registeredUsers)) {
+        // Fetch this user's scores from Firebase
+        console.log("Fetching scores for user:", userId);
+        const userScoresSnap = await get(child(ref(db), `Users/${userId}/scores/${compId}`));
+
+        if (!userScoresSnap.exists()) {
+          console.log(`❌ No score data for user: ${userId}`);
+          continue;
+        }
+
+        const scoreData = userScoresSnap.val();
+
+        // Extract TotalScore
+        const totalScore = scoreData.TotalScore || 0;
+
+        // Extract daily scores, excluding TotalScore
+        const dailyScores = Object.entries(scoreData)
+          .filter(([key]) => key !== "TotalScore")
+          .map(([date, obj]) => ({
+            date,
+            score: obj.score || 0,
+          }))
+          // Sort daily scores by date descending (latest first)
+          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .slice(0, 4); // Only top 4 days
+
+        usersWithScores.push({
+          userId,
+          TotalScore: totalScore,
+          dailyScores,
+        });
+      }
+
+      // Step 2: Sort users
+      const sortedUsers = usersWithScores.sort((a, b) => {
+        // 1. Compare TotalScore
+        if (b.TotalScore !== a.TotalScore) {
+          return b.TotalScore - a.TotalScore;
+        }
+
+        // 2. Tie-breaker: Compare day-by-day scores
+        for (let i = 0; i < 4; i++) {
+          const scoreA = a.dailyScores[i]?.score || 0;
+          const scoreB = b.dailyScores[i]?.score || 0;
+
+          if (scoreB !== scoreA) {
+            return scoreB - scoreA; // Descending
+          }
+        }
+
+        // 3. Still tied
+        return 0;
+      });
+
+      // Step 3: Assign ranks
+      let previousUser = null;
+
+      const rankedUsers = sortedUsers.map((user, index) => {
+        let rank;
+
+        if (
+          previousUser &&
+          previousUser.TotalScore === user.TotalScore &&
+          JSON.stringify(previousUser.dailyScores) === JSON.stringify(user.dailyScores)
+        ) {
+          rank = previousUser.rank; // same rank for exact tie
+        } else {
+          rank = index + 1;
+        }
+
+        previousUser = { ...user, rank };
+
+        return {
+          userId: user.userId,
+          TotalScore: user.TotalScore,
+          rank,
+          dailyScores: user.dailyScores,
+        };
+      });
+
+        console.log("🏆 Final Ranking:", rankedUsers);
+        const resultsRef = ref(db, `Competition/${compId}/result`);
+
+        const resultArray = rankedUsers.map(user => ({
+        userId: user.userId,
+        TotalScore: user.TotalScore,
+        rank: user.rank,
+        dailyScores: user.dailyScores,
+        }));
+
+        await set(resultsRef, resultArray);
+
+    }
+  } catch (error) {
+    console.error("🔥 Error fetching competitions:", error);
+  }
 }
+
 
