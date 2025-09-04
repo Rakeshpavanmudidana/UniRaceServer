@@ -99,7 +99,7 @@ export async function quizNotification() {
     const data = snapshot.val();
     
 
-    const today = new Date();
+    let today = new Date();
 
     for (const [compId, compData] of Object.entries(data)) {
       console.log("📌 Competition ID:", compId);
@@ -117,36 +117,38 @@ export async function quizNotification() {
       if (diff <= 3 && diff >= 0) {
         for (const [userId, user] of Object.entries(compData.registeredUsers || {})) {
 
-            for (const [date, value] of Object.entries(user.attempts || {})) {
-                console.log("User Attempt Date:", date);
-                if ( date === today.toISOString().split('T')[0]) {
-                    subject = `Reminder: Quiz "${compData.title}"(${compData.Id}) test not attempted today!`;
-                    message = `Dear Participant,
+            // Get today's date in YYYY-MM-DD format
+ today = today.toISOString().split('T')[0];
+
+// Extract just the attempt dates (keys)
+const attemptDates = Object.keys(user.attempts || {});
+
+// Debugging
+console.log("Attempt Dates:", attemptDates);
+console.log("Today:", today);
+
+// Check if today's date is present
+if (attemptDates.includes(today)) {
+    console.log("✅ User attempted the quiz today!");
+} else {
+    console.log("❌ User has NOT attempted the quiz today!");
+    
+    // Send reminder email
+    const subject = `Reminder: Quiz "${compData.title}" (${compData.Id}) not attempted today!`;
+    const message = `Dear Participant,
+
 This is a reminder that you have not attempted the quiz test for "${compData.title}" (${compData.Id}) today.
 
-Please attempt the quiz or you may loss the rank.
-
+Please attempt the quiz, or you may lose your rank.
 
 Warm regards,
-
 Team UniRace
 *(This is an automated message, please do not reply.)*
 `;
-                    sendEmail(subject, message, user.email);
-                }
-            }
 
-//             subject = `Reminder: Registration for "${compData.title}" closes in ${diff} day${diff > 1 ? 's' : ''}`;
-//             message = `Dear Participant,
+    sendEmail(subject, message, user.email);
+}
 
-// This is a reminder that the registration for "${compData.title}" ${compData.type} closes in ${diff} day${diff > 1 ? 's' : ''}.
-
-// Search "${compData.title}" or ID "${compId}" in UniRace to register before the deadline.
-
-// Warm regards,
-// Team UniRace
-// *(This is an automated message, please do not reply.)*
-// `;
         }
         
       }
