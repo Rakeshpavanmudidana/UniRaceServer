@@ -17,7 +17,7 @@ app.get("/", async (req, res) => {
 });
 
 // Schedule job: run daily at 8:00 AM
-cron.schedule("0 18 * * *", () => {
+cron.schedule("58 12 * * *", () => {
   console.log("⏰ Running scheduled competition reminder job...");
   checkCompetitions();
   quizNotification();
