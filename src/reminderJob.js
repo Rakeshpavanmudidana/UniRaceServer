@@ -117,6 +117,7 @@ export async function quizNotification() {
       if (diff <= 3 && diff >= 0) {
         for (const [userId, user] of Object.entries(compData.registeredUsers || {})) {
 
+<<<<<<< HEAD
             // Get today's date in YYYY-MM-DD format
  today = today.toISOString().split('T')[0];
 
@@ -137,6 +138,14 @@ if (attemptDates.includes(today)) {
     const subject = `Reminder: Quiz "${compData.title}" (${compData.Id}) not attempted today!`;
     const message = `Dear Participant,
 
+=======
+            for (const [date, value] of Object.entries(user.attempts || {})) {
+                console.log("User Attempt Date:", date);
+                if ( date === today.toISOString().split('T')[0]) {
+                  console.log("hello");
+                    subject = `Reminder: Quiz "${compData.title}"(${compData.Id}) test not attempted today!`;
+                    message = `Dear Participant,
+>>>>>>> 3be6ba9cd1adb277bf52d98bf200e90f87016e3c
 This is a reminder that you have not attempted the quiz test for "${compData.title}" (${compData.Id}) today.
 
 Please attempt the quiz, or you may lose your rank.
