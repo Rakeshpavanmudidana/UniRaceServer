@@ -216,7 +216,7 @@ export async function winnerDecider() {
                         console.error("Error fetching user scores:", error);
                     });
 
-                    for (let i = 0; i < d; i++) {
+                    for (let i = 0; i < 4; i++) {
                         const date = i;
                         const scoreA = get(child(ref(db), `Users/${a[0]}/scores/${compId}/${userADates[date]}/score`)) || 0;
                         const scoreB = get(child(ref(db), `Users/${b[0]}/scores/${compId}/${userBDates[date]}/score`)) || 0;
