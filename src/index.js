@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import cron from "node-cron";
 import express from "express";
-import { checkCompetitions, quizNotification } from "./reminderJob.js";
+import { checkCompetitions, quizNotification, winnerDecider } from "./reminderJob.js";
 
 dotenv.config();
 const app = express();
@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 app.get("/", async (req, res) => {
   // await checkCompetitions();
   // await quizNotification();
+  await winnerDecider();
   res.send("Reminder job executed manually!");
 });
 
@@ -22,11 +23,24 @@ cron.schedule("0 18 * * *", () => {
   quizNotification();
   sendEmail();
 });
+
+
 cron.schedule("0 21 * * *", () => {
   console.log("⏰ Running scheduled competition reminder job...");
   quizNotification();
   sendEmail();
 });
+
+
+cron.schedule("40 6 * * *", () => {
+  const today = new Date();
+  if (today.getDay() === 0) {
+    console.log("⏰ Running scheduled competition reminder job...");
+    // winnerDecider();
+  }
+
+});
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on http://localhost:${PORT}`);
