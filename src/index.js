@@ -32,7 +32,7 @@ cron.schedule("0 21 * * *", () => {
 });
 
 
-cron.schedule("40 6 * * *", () => {
+cron.schedule("45 6 * * *", () => {
   const today = new Date();
   if (today.getDay() === 0) {
     console.log("⏰ Running scheduled competition reminder job...");
