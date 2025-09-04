@@ -56,8 +56,5 @@ export function sendEmail() {
       console.log(`✅ Email sent to ${recipientEmail}: ${info.response}`);
     }
   });
-<<<<<<< HEAD
+
 }
-=======
-}
->>>>>>> 3be6ba9cd1adb277bf52d98bf200e90f87016e3c
