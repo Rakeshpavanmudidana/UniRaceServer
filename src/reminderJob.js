@@ -218,8 +218,8 @@ export async function winnerDecider() {
 
                     for (let i = 0; i < d; i++) {
                         const date = i;
-                        const scoreA = get(child(ref(db), `Users/${a[0]}/scores/${compId}/${date}/score`)) || 0;
-                        const scoreB = get(child(ref(db), `Users/${b[0]}/scores/${compId}/${date}/score`)) || 0;
+                        const scoreA = get(child(ref(db), `Users/${a[0]}/scores/${compId}/${userADates[date]}/score`)) || 0;
+                        const scoreB = get(child(ref(db), `Users/${b[0]}/scores/${compId}/${userBDates[date]}/score`)) || 0;
 
                         if (scoreA !== scoreB) {
                             return (scoreB || 0) - (scoreA || 0); // Descending, treat undefined as 0
