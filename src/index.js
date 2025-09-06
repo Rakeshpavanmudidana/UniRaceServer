@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 app.get("/", async (req, res) => {
   // await checkCompetitions();
   // await quizNotification();
-  await winnerDecider();
+  // await winnerDecider();
   res.send("Reminder job executed manually!");
 });
 
