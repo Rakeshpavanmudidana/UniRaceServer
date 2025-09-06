@@ -210,10 +210,13 @@ export async function winnerDecider() {
           .map(([date, obj]) => ({
             date,
             score: obj.score || 0,
+            time: obj.TotalTime || 0,
           }))
+          
           // Sort daily scores by date descending (latest first)
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .slice(0, 4); // Only top 4 days
+          console.log(dailyScores);
 
         usersWithScores.push({
           userId,
@@ -239,6 +242,15 @@ export async function winnerDecider() {
           }
         }
 
+        for (let i = 0; i < 4; i++){
+            const timeA = a.dailyScores[i]?.time || Infinity;
+            const timeB = b.dailyScores[i]?.time || Infinity;
+            if (timeA !== timeB) {
+                return timeA - timeB; // Ascending
+            }
+
+        }
+
         // 3. Still tied
         return 0;
       });
@@ -260,7 +272,7 @@ export async function winnerDecider() {
         }
 
         previousUser = { ...user, rank };
-
+        console.log("daily Score", user.dailyScores);
         return {
           userId: user.userId,
           TotalScore: user.TotalScore,
@@ -270,6 +282,81 @@ export async function winnerDecider() {
       });
 
         console.log("🏆 Final Ranking:", rankedUsers);
+
+        // email sending code for winners can be added here
+
+        sendEmail( "Winner Announcement - UniRace Competition",
+                    "Dear Team,\n\n" +
+
+                    "The results for the competition " + compData.title + "(" + compId + ") " + "have been finalized.\n\n" +
+
+                    "\t🏆 Winner Details:\n\n" +
+                    "1st Place: " + rankedUsers[0].userId + "\n" +
+
+                    "Please update the records and take the necessary follow-up actions.\n\n" +
+                    "Team UniRace",
+                        process.env.GMAIL_HEAD
+        );
+
+
+
+        sendEmail( "🎉 Congratulations! You're a Winner - UniRace",
+                        "Dear Participant,\n\n" +
+
+                        "Congratulations! 🎊 You have emerged as a winner in the competition " + compData.title +  "( " + compId + ").\n\n" +
+
+                        "\t🏆 Your Results:\n\n"+
+                        "- Rank: " + rankedUsers[0].rank + "\n" +
+                        "- Total Score: " + rankedUsers[0].TotalScore + "\n\n" +
+
+
+                        "As a token of appreciation, **200 coins** have been credited to your UniRace account. 💰\n\n" +
+
+                        "You can view detailed results and claim your rewards by visiting the **UniRace app/website**.\n\n" +
+
+                        "Keep up the great work and continue participating in upcoming events!" + "\n\n" +
+
+                        "Warm regards,\n" +  
+                        "Team UniRace" + "\n" +  
+                        "(This is an automated message, please do not reply.)",
+                        registeredUsers[rankedUsers[0].userId].email
+                        );
+
+        const coins1 = (registeredUsers[rankedUsers[0].userId].coins || 0) + 220;
+        await set(ref(db, `Users/${rankedUsers[0].userId}/coins`), coins1);
+
+        await set(ref(db, `Users/${rankedUsers[0].userId}/competitionCoins/${compId}`), 220);
+
+        for (let i = 1; i < rankedUsers.length; i++) {
+            if (rankedUsers[i].dailyScores.length !== 0 ) {
+                sendEmail( "Results Announced - UniRace Competition",
+                "Hello " + registeredUsers[rankedUsers[i].userId] + ",\n\n" +
+
+                "The results for the competition " + compData.title + "(" + compId + ") " + "have been announced!\n\n" +
+
+                "Thank you for participating in this event.\n\n" +  
+                "As a token of appreciation, 20 coins have been added to your account\b for participating.\n\n" +
+
+                "You can check the detailed results and your performance in the UniRace app or website.\n\n" +
+
+                "Stay tuned for more exciting competitions ahead!\n\n" +
+                "Best Regards,  \n" +
+                "Team UniRace",
+                registeredUsers[rankedUsers[i].userId].email
+                );
+                const Totalcoins = (registeredUsers[rankedUsers[0].userId].coins || 0) + 20;
+                await set(ref(db, `Users/${rankedUsers[i].userId}/coins`), Totalcoins);
+
+                await set(ref(db, `Users/${rankedUsers[i].userId}/competitionCoins/${compId}`), 20);
+
+            }
+            
+
+        }
+
+
+
+
         const resultsRef = ref(db, `Competition/${compId}/result`);
 
         const resultArray = rankedUsers.map(user => ({
@@ -279,10 +366,11 @@ export async function winnerDecider() {
         dailyScores: user.dailyScores,
         }));
 
+
         await set(resultsRef, resultArray);
 
     }
-  } catch (error) {
+ } catch (error) {
     console.error("🔥 Error fetching competitions:", error);
   }
 }

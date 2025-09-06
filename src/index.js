@@ -17,7 +17,7 @@ app.get("/", async (req, res) => {
 });
 
 // Schedule job: run daily at 8:00 AM
-cron.schedule("50 13 * * *", () => {
+cron.schedule("30 12 * * *", () => { //6:00 pm
   console.log("⏰ Running scheduled competition reminder job...");
   checkCompetitions();
   quizNotification();
@@ -25,18 +25,18 @@ cron.schedule("50 13 * * *", () => {
 });
 
 
-cron.schedule("0 21 * * *", () => {
-  console.log("⏰ Running scheduled competition reminder job...");
+cron.schedule("30 15 * * *", () => { //9:00 pm
+  console.log("⏰ Running scheduled quiz reminder job...");
   quizNotification();
   sendEmail();
 });
 
 
-cron.schedule("55 12 * * *", () => {
+cron.schedule("30 0 * * *", () => {
   const today = new Date();
   if (today.getDay() === 0) {
-    console.log("⏰ Running scheduled competition reminder job...");
-    // winnerDecider();
+    console.log("⏰ Running scheduled competition winnerDecider job...");
+    winnerDecider();
   }
 
 });
