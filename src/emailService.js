@@ -5,7 +5,7 @@ dotenv.config();
 console.log("EMAIL_USER:", process.env.GMAIL_USER);
 console.log("EMAIL_PASS:", process.env.GMAIL_PASS ? "Loaded ✅" : "Missing ❌");
 
-export function sendEmail(subject, message, recipientEmail) {
+export function sendEmail(subject, htmlContent, recipientEmail) {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -18,7 +18,7 @@ export function sendEmail(subject, message, recipientEmail) {
     from: `"Team UniRace" <${process.env.GMAIL_USER}>`,
     to: recipientEmail,
     subject: subject,
-    text: message,
+    html: htmlContent,
   };
 
   transporter.sendMail(mailOptions, (error, info) => {

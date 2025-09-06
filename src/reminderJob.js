@@ -47,15 +47,21 @@ export async function checkCompetitions() {
           if (!user.Registered && user.NotifyMe) {
             console.log(user.email);
             subject = `Reminder: Registration for "${compData.title}"  closes in ${diff} day${diff > 1 ? 's' : ''}`;
-            message = "Dear Participant,\n\n" +
+            const message =
+                        "<p>Dear Participant,</p>" +
 
-                    "This is a reminder that the registration for " + compData.title + " (" + compData.Id + ") " + "closes in" + diff +  "day" + diff > 1 ? 's' : '' + ".\n\n"
+                        "<p>This is a reminder that the registration for " +
+                        "<b>" + compData.title + " (" + compData.Id + ")</b> " +
+                        "closes in <b>" + diff + " day" + (diff > 1 ? "s" : "") + "</b>.</p>" +
 
-                    "Search " + compData.title + " or ID '" + compId + "' in UniRace to register before the deadline.\n\n" +
+                        "<p>Search for <b>" + compData.title + "</b> or use the ID <b>" + compId + "</b> in the <b>UniRace</b> app to register before the deadline.</p>" +
 
-                    "Warm regards,\n" +
-                    "Team UniRace" +
-                    "*(This is an automated message, please do not reply.)*";
+                        "<p>Don't miss out — complete your registration now!</p>" +
+
+                        "<p>Warm regards,<br><b>Team UniRace</b></p>" +
+
+                        "<p style=\"color: gray; font-size: 12px;\">*(This is an automated message, please do not reply.)*</p>";
+
                     sendEmail(subject, message, user.email);
           }
           
@@ -66,13 +72,22 @@ export async function checkCompetitions() {
       else if (diff === 1) {
             for (const [userId, user] of Object.entries(compData.visitedUsers || {})) {
                 subject = `Registration for "${compData.title}" closes tomorrow!`;
-                message = "Dear Participant,\n\n" + 
-                        "This is a final reminder that the registration for " + compData.title + " (" + compData.Id + ") closes tomorrow.\n\n" +
+                const subject = `Registration for "${compData.title}" Closes Tomorrow!`;
 
-                        "Search " + compData.title + " or ID " + compId + " in UniRace to register before the today.\n\n" +
-                        "Warm regards,\n" +
-                        "Team UniRace\n" +
-                        "*(This is an automated message, please do not reply.)*";
+                const message =
+                                "<p>Dear Participant,</p>" +
+
+                                "<p>This is a final reminder that the registration for " +
+                                "<b>" + compData.title + " (" + compData.Id + ")</b> will close <b>tomorrow</b>.</p>" +
+
+                                "<p>Search for <b>" + compData.title + "</b> or use the ID <b>" + compId + "</b> in the <b>UniRace</b> app to register before the deadline.</p>" +
+
+                                "<p>Don't miss out on this opportunity — complete your registration now!</p>" +
+
+                                "<p>Warm regards,<br><b>Team UniRace</b></p>" +
+
+                                "<p style=\"color: gray; font-size: 12px;\">*(This is an automated message, please do not reply.)*</p>";
+
 
             sendEmail(subject, message, user.email);
             }
@@ -135,16 +150,24 @@ export async function quizNotification() {
                         console.log("❌ User has NOT attempted the quiz today!");
                         
                         // Send reminder email
-                        const subject = `Reminder: Quiz "${compData.title}" (${compData.Id}) not attempted today!`;
-                        const message = "Dear Participant, \n\n" +
 
-                                        "This is a reminder that you have not attempted the quiz test for " + compData.title + " (" + compData.Id + ")"+ "today.\n" +
+                        const subject = `Reminder: Quiz "${compData.title}" (${compData.Id}) Not Attempted Today!`;
 
-                                        "Please attempt the quiz, or you may lose your rank.\n\n"+
+                        const message =
+                        "<p>Dear Participant,</p>" +
 
-                                        "Warm regards,\n"+
-                                        "Team UniRace\n" +
-                                        "*(This is an automated message, please do not reply.)*";
+                        "<p>This is a friendly reminder that you have not attempted the quiz test for " +
+                        "<b>" + compData.title + " (" + compData.Id + ")</b> today.</p>" +
+
+                        "<p><b>⚠️ Please attempt the quiz as soon as possible</b>, or you may risk losing your rank.</p>" +
+
+                        "<p>Stay consistent and keep up the great work!</p>" +
+
+                        "<p>Warm regards,<br><b>Team UniRace</b></p>" +
+
+                        "<p style=\"color: gray; font-size: 12px;\">*(This is an automated message, please do not reply.)*</p>";
+
+
 
                         sendEmail(subject, message, user.email);
                     }
@@ -281,46 +304,65 @@ export async function winnerDecider() {
         };
       });
 
+      let htmlMessage = "";
+
         console.log("🏆 Final Ranking:", rankedUsers);
 
         // email sending code for winners can be added here
 
-        sendEmail( "Winner Announcement - UniRace Competition",
-                    "Dear Team,\n\n" +
+                htmlMessage = "<p>Dear Team,</p>" +
 
-                    "The results for the competition " + compData.title + "(" + compId + ") " + "have been finalized.\n\n" +
+                                "<p>The results for the competition <b>" + compData.title + " (" + compId + ")</b> have been finalized.</p>" +
 
-                    "\t🏆 Winner Details:\n\n" +
-                    "1st Place: " + rankedUsers[0].userId + "\n" +
+                                "<h3>🏆 Winner Details:</h3>" +
+                                "<p><b>1st Place:</b> " + rankedUsers[0].userId + "</p>" +
 
-                    "Please update the records and take the necessary follow-up actions.\n\n" +
-                    "Team UniRace",
-                        process.env.GMAIL_HEAD
-        );
+                                "<p>Please update the records and take the necessary follow-up actions.</p>" +
+
+                                "<p>Best Regards,<br><b>Team UniRace</b></p>" +
+
+                                "<p style=\"color: gray; font-size: 12px;\">(This is an automated message, please do not reply.)</p>";
+
+                sendEmail(
+                "Winner Announcement - UniRace Competition",
+                htmlMessage,
+                process.env.GMAIL_HEAD
+                );
+
+        const subject = "🎉 Congratulations! You're a Winner - UniRace";
+
+        htmlMessage = "<p>Dear Participant,</p>" +
+
+                            "<p>Congratulations! 🎊 You have emerged as a <b>winner</b> in the competition " +
+                            "<b>" + compData.title + " (" + compId + ")</b>.</p>" +
+
+                            "<h3>🏆 Your Results:</h3>" +
+                            "<ul>" +
+                            "<li><b>Rank:</b> " + rankedUsers[0].rank + "</li>" +
+                            "<li><b>Total Score:</b> " + rankedUsers[0].TotalScore + "</li>" +
+                            "</ul>" +
+
+                            "<p>As a token of appreciation, <b>200 coins</b> have been credited to your UniRace account. 💰</p>" +
+
+                            "<p>" +
+                            "You can view detailed results and claim your rewards by visiting the " +
+                            "<b>UniRace app/website</b>." +
+                            "</p>" +
+
+                            "<p>Keep up the great work and continue participating in upcoming events!</p>" +
+
+                            "<p>Warm regards,<br>" +
+                            "<b>Team UniRace</b></p>" +
+
+                            "<p style=\"color: gray; font-size: 12px;\">" +
+                            "*(This is an automated message, please do not reply.)*" +
+                            "</p>";
 
 
 
-        sendEmail( "🎉 Congratulations! You're a Winner - UniRace",
-                        "Dear Participant,\n\n" +
-
-                        "Congratulations! 🎊 You have emerged as a winner in the competition " + compData.title +  "( " + compId + ").\n\n" +
-
-                        "\t🏆 Your Results:\n\n"+
-                        "- Rank: " + rankedUsers[0].rank + "\n" +
-                        "- Total Score: " + rankedUsers[0].TotalScore + "\n\n" +
 
 
-                        "As a token of appreciation, **200 coins** have been credited to your UniRace account. 💰\n\n" +
-
-                        "You can view detailed results and claim your rewards by visiting the **UniRace app/website**.\n\n" +
-
-                        "Keep up the great work and continue participating in upcoming events!" + "\n\n" +
-
-                        "Warm regards,\n" +  
-                        "Team UniRace" + "\n" +  
-                        "(This is an automated message, please do not reply.)",
-                        registeredUsers[rankedUsers[0].userId].email
-                        );
+        sendEmail( subject, htmlMessage, registeredUsers[rankedUsers[0].userId].email);
 
         const coins1 = (registeredUsers[rankedUsers[0].userId].coins || 0) + 220;
         await set(ref(db, `Users/${rankedUsers[0].userId}/coins`), coins1);
@@ -329,21 +371,29 @@ export async function winnerDecider() {
 
         for (let i = 1; i < rankedUsers.length; i++) {
             if (rankedUsers[i].dailyScores.length !== 0 ) {
-                sendEmail( "Results Announced - UniRace Competition",
-                "Hello " + registeredUsers[rankedUsers[i].userId] + ",\n\n" +
+                
+                const htmlMessage = "<p>Hello " + (registeredUsers[rankedUsers[i].userId].name || "Participant") + ",</p>" +
 
-                "The results for the competition " + compData.title + "(" + compId + ") " + "have been announced!\n\n" +
+                                    "<p>The results for the competition <b>" + compData.title + " (" + compId + ")</b> have been announced! 🎉</p>" +
 
-                "Thank you for participating in this event.\n\n" +  
-                "As a token of appreciation, 20 coins have been added to your account\b for participating.\n\n" +
+                                    "<p>Thank you for participating in this event.</p>" +
 
-                "You can check the detailed results and your performance in the UniRace app or website.\n\n" +
+                                    "<p>As a token of appreciation, <b>20 coins</b> have been added to your account for participating. 💰</p>" +
 
-                "Stay tuned for more exciting competitions ahead!\n\n" +
-                "Best Regards,  \n" +
-                "Team UniRace",
+                                    "<p>You can check the detailed results and your performance in the <b>UniRace app</b> or <b>website</b>.</p>" +
+
+                                    "<p>Stay tuned for more exciting competitions ahead!</p>" +
+
+                                    "<p>Best Regards,<br><b>Team UniRace</b></p>" +
+
+                                    "<p style=\"color: gray; font-size: 12px;\">(This is an automated message, please do not reply.)</p>";
+        
+                sendEmail(
+                "Results Announced - UniRace Competition",
+                htmlMessage,
                 registeredUsers[rankedUsers[i].userId].email
                 );
+
                 const Totalcoins = (registeredUsers[rankedUsers[0].userId].coins || 0) + 20;
                 await set(ref(db, `Users/${rankedUsers[i].userId}/coins`), Totalcoins);
 

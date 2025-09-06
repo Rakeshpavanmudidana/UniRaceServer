@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 // API endpoint to manually trigger the reminder job
 app.get("/", async (req, res) => {
-  // await checkCompetitions();
+  await checkCompetitions();
   // await quizNotification();
   // await winnerDecider();
   res.send("Reminder job executed manually!");
